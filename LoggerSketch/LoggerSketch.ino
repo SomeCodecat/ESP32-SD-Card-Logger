@@ -1,7 +1,6 @@
 // Sketch by ZeroTwoWeeb
-// Some parts are from library examples
-// Device to log data from Ultrasonic-Sensor onto SD-Card with Timestamp by RTC
-// The Data can also be shown by a 16x2 LCD Display via button press (interrupt)
+// A Sketch to log data from an Ultrasonic-Sensor onto an SD-Card with a Timestamp by from an RTC
+// The Data is shown on a 16x2 LCD Display with a button press via interrupt
 
 
 
@@ -19,7 +18,7 @@
 #define LCDBUTTON_PIN 35
 #define uS_TO_S_FACTOR 1000000
 #define SECONDS_TO_SLEEP 10
-#define Sample_Nr 5 //from how many values the average should be taken(Ultrasonic-Sensor)
+#define SAMPLE_NR 5 //set how many samples you want the average to be taken from (Ultrasonic-Sensor)
 //#define CONFIG_ESP_INT_WDT_TIMEOUT_MS 2000
 
 
@@ -28,23 +27,22 @@ RTC_DS3231 rtc;
 //LCD Pins
 LiquidCrystal lcd(32, 33, 25, 26, 27, 14);
 
-//Supersonic-Sensor Var's
+//Ultrasonic-Sensor Variables
 RTC_DATA_ATTR const int SENSOR_MAX_RANGE = 300; // in cm
 RTC_DATA_ATTR unsigned long duration;
 RTC_DATA_ATTR unsigned int distance;
 
 
-//count Var's
-RTC_DATA_ATTR int i = 0; //Var to show how many Datapoints are currently beeing stored(Session only)
+//Count Variables
+RTC_DATA_ATTR int i = 0; //Variable to show how many Datapoints are currently beeing stored (Session only)
 RTC_DATA_ATTR boolean lcdStatus = false;
 RTC_DATA_ATTR int bootCount = 0;
 
 void setup()
 {
+    //Start Serial
     Serial.begin(115200);
     log_d("Serial Begin...");
-
-
 
     attachInterrupt(LCDBUTTON_PIN, lcdinterrupt, RISING);
 
@@ -53,7 +51,7 @@ void setup()
     pinMode(BACKLIGHT_PIN, OUTPUT );
     pinMode(LCDBUTTON_PIN, INPUT);
 
-    //start LCD
+    //Start LCD
     lcd.begin(16, 2);
     lcd.print("startup...");
 
@@ -68,13 +66,14 @@ void setup()
 
     if (rtc.lostPower())
     {
-        log_e("RTC lost power, lets set the time!");
+        log_e("RTC lost power, let's set the time!");
         // following line sets the RTC to the date &amp; time this sketch was compiled
         rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
         // This line sets the RTC with an explicit date &amp; time, for example to set
         // January 21, 2014 at 3am you would call:
         // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
     }
+    
     if (!SD.begin())
     {
         log_e("Card Mount Failed");
@@ -84,7 +83,7 @@ void setup()
 
     if (cardType == CARD_NONE)
     {
-        log_e("No SD card attached");
+        log_e("No SD Card Attached");
         return;
     }
 
@@ -256,9 +255,9 @@ void writeFile(fs::FS &fs, const char *path, const char *message)
 
 String getDistance(){
     int duration;
-    float distance[Sample_Nr];
+    float distance[SAMPLE_NR];
     // change to US-100 take 5-10 values and return average (maybe check for far of values)
-    for (int counter = 0; counter < Sample_Nr; counter++) {
+    for (int counter = 0; counter < SAMPLE_NR; counter++) {
     digitalWrite(PIN_TRIGGER, HIGH);
     delayMicroseconds(500);
     digitalWrite(PIN_TRIGGER, LOW);
@@ -266,9 +265,9 @@ String getDistance(){
     distance[counter] = (duration / 2.0) / 2.91;
     }
     long sum = 0L ;  // sum will be larger than an item, long for safety.
-    for (int counter = 0 ; counter < Sample_Nr ; counter++)
+    for (int counter = 0 ; counter < SAMPLE_NR ; counter++)
       sum += distance[counter] ;
-    return  String(String(((float) sum) / Sample_Nr)+"mm").c_str();  // average will be fractional, so float may be appropriate.
+    return  String(String(((float) sum) / SAMPLE_NR)+"mm").c_str();  // average will be fractional, so float may be appropriate.
     
 }
 
